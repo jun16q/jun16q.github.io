@@ -1,51 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>鋼琴鍵盤</title>
-<style>
-  .key {
-    display: inline-block;
-    width: 40px;
-    height: 150px;
-    margin: 1px;
-    border: 1px solid black;
-    background: white;
-    position: relative;
-    vertical-align: bottom;
-    user-select: none;
-    text-align: center;
-    line-height: 150px;
-    font-weight: bold;
-  }
-  .key.black {
-    width: 30px;
-    height: 100px;
-    background: black;
-    color: white;
-    position: absolute;
-    margin-left: -15px;
-    z-index: 1;
-    line-height: 100px;
-  }
-  #keyboard {
-    position: relative;
-    height: 160px;
-  }
-</style>
+  <meta charset="UTF-8">
+  <title>完整半音鋼琴鍵盤＋和弦</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #f0f0f0;
+    }
+    .piano {
+      position: relative;
+      display: inline-block;
+      margin-top: 40px;
+    }
+    .white-key, .black-key {
+      display: inline-block;
+      position: absolute;
+      border: 1px solid #333;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      cursor: pointer;
+      text-align: center;
+      font-size: 12px;
+    }
+    .white-key {
+      width: 40px;
+      height: 180px;
+      background: white;
+      z-index: 1;
+    }
+    .black-key {
+      width: 26px;
+      height: 110px;
+      background: black;
+      color: white;
+      z-index: 2;
+    }
+    .active {
+      background: #88f !important;
+    }
+  </style>
 </head>
 <body>
 
-<select id="waveType">
-  <option value="sine">Sine</option>
-  <option value="triangle">Triangle</option>
-  <option value="square">Square</option>
-  <option value="sawtooth">Sawtooth</option>
-</select>
-
-<div id="keyboard"></div>
+<h1>🎹 鋼琴鍵盤 C4 ~ D5（含半音）＋常見和弦</h1>
+<p>單音：Z~M, 和弦：QWERTY</p>
+<div class="piano" id="piano"></div>
 
 <script>
+const context = new (window.AudioContext || window.webkitAudioContext)();
+const oscillators = {};
+const chordOscillators = {};
+
 const notes = {
   'z': { note: 'C4', freq: 261.63, pos: 0 },
   's': { note: 'C#4', freq: 277.18, pos: 30, black: true },
@@ -66,68 +72,105 @@ const notes = {
   '/': { note: 'E5', freq: 659.25, pos: 360 }
 };
 
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-const activeOscillators = {};
+// 和弦鍵對應音高（QWERTY）
+const chords = {
+  'q': [261.63, 329.63, 392.00],   // C major: C E G
+  'w': [293.66, 349.23, 440.00],   // D minor: D F A
+  'e': [329.63, 392.00, 493.88],   // E minor: E G B
+  'r': [349.23, 440.00, 523.25],   // F major: F A C5
+  't': [392.00, 493.88, 587.33],   // G major: G B D5
+  'y': [440.00, 523.25, 659.25]    // A minor: A C5 E5
+};
 
-function playNote(freq, key) {
-  const osc = audioCtx.createOscillator();
-  const gainNode = audioCtx.createGain();
+// Render keys
+const piano = document.getElementById('piano');
+for (let key in notes) {
+  const note = notes[key];
+  const div = document.createElement('div');
+  div.className = note.black ? 'black-key' : 'white-key';
+  div.style.left = note.pos + 'px';
+  div.dataset.key = key;
+  div.title = `${note.note} (${key.toUpperCase()})`;
+  div.innerHTML = note.black ? key.toUpperCase() : `<br>${key.toUpperCase()}`;
+  div.addEventListener('mousedown', () => startNote(key));
+  div.addEventListener('mouseup', () => stopNote(key));
+  div.addEventListener('mouseleave', () => stopNote(key));
+  piano.appendChild(div);
+}
 
-  const waveType = document.getElementById('waveType').value;
-  osc.type = waveType;
-  osc.frequency.value = freq;
+function startNote(key) {
+  if (oscillators[key]) return;
+  const data = notes[key];
+  if (!data) return;
 
-  gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
-
-  osc.connect(gainNode);
-  gainNode.connect(audioCtx.destination);
-
+  const osc = context.createOscillator();
+  const gain = context.createGain();
+  osc.type = 'triangle';
+  osc.frequency.value = data.freq;
+  gain.gain.setValueAtTime(0.2, context.currentTime);
+  osc.connect(gain).connect(context.destination);
   osc.start();
 
-  activeOscillators[key] = {osc, gainNode};
+  oscillators[key] = { osc, gain };
+  document.querySelector(`[data-key="${key}"]`)?.classList.add('active');
 }
 
 function stopNote(key) {
-  const oscData = activeOscillators[key];
-  if (oscData) {
-    const { osc, gainNode } = oscData;
-    // 漸弱音量
-    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-    osc.stop(audioCtx.currentTime + 0.3);
-    delete activeOscillators[key];
-  }
+  const obj = oscillators[key];
+  if (!obj) return;
+  obj.gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.5);
+  obj.osc.stop(context.currentTime + 0.5);
+  delete oscillators[key];
+  document.querySelector(`[data-key="${key}"]`)?.classList.remove('active');
 }
 
-window.addEventListener('keydown', (e) => {
+// Chord play
+function playChord(key) {
+  if (chordOscillators[key]) return;
+  const freqs = chords[key];
+  if (!freqs) return;
+  chordOscillators[key] = [];
+  freqs.forEach(freq => {
+    const osc = context.createOscillator();
+    const gain = context.createGain();
+    osc.type = 'triangle';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.15, context.currentTime);
+    osc.connect(gain).connect(context.destination);
+    osc.start();
+    chordOscillators[key].push({ osc, gain });
+  });
+}
+
+function stopChord(key) {
+  const arr = chordOscillators[key];
+  if (!arr) return;
+  arr.forEach(({ osc, gain }) => {
+    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.5);
+    osc.stop(context.currentTime + 0.5);
+  });
+  delete chordOscillators[key];
+}
+
+// 全域鍵盤監聽
+document.addEventListener('keydown', e => {
   if (e.repeat) return;
   const key = e.key.toLowerCase();
-  if (notes[key] && !activeOscillators[key]) {
-    playNote(notes[key].freq, key);
+  if (chords[key]) {
+    playChord(key);
+  } else {
+    startNote(key);
   }
 });
 
-window.addEventListener('keyup', (e) => {
+document.addEventListener('keyup', e => {
   const key = e.key.toLowerCase();
-  if (notes[key]) {
+  if (chords[key]) {
+    stopChord(key);
+  } else {
     stopNote(key);
   }
 });
-
-// 簡單畫白鍵跟黑鍵的視覺
-const keyboardDiv = document.getElementById('keyboard');
-for (const [key, data] of Object.entries(notes)) {
-  const keyDiv = document.createElement('div');
-  keyDiv.classList.add('key');
-  if (data.black) {
-    keyDiv.classList.add('black');
-    keyDiv.style.left = data.pos + 'px';
-  } else {
-    keyDiv.style.position = 'relative';
-    keyDiv.style.marginLeft = (data.pos) + 'px';
-  }
-  keyDiv.textContent = key.toUpperCase();
-  keyboardDiv.appendChild(keyDiv);
-}
 </script>
 
 </body>
