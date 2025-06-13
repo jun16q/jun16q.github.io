@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>進階互動鋼琴</title>
+  <meta charset="UTF-8">
+  <title>完整半音鋼琴鍵盤</title>
   <style>
     body {
       font-family: sans-serif;
@@ -10,114 +10,116 @@
       background: #f0f0f0;
     }
     .piano {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin: 30px;
-    }
-    .key {
-      width: 50px;
-      height: 180px;
-      margin: 1px;
-      background: white;
-      border: 1px solid #aaa;
-      border-radius: 4px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
       position: relative;
-      cursor: pointer;
+      display: inline-block;
+      margin-top: 40px;
     }
-    .key.active {
-      background: #d0eaff;
-    }
-    .label {
+    .white-key, .black-key {
+      display: inline-block;
       position: absolute;
-      bottom: 5px;
-      width: 100%;
-      font-size: 14px;
-      color: #333;
+      border: 1px solid #333;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      cursor: pointer;
+      text-align: center;
+      font-size: 12px;
+    }
+    .white-key {
+      width: 40px;
+      height: 180px;
+      background: white;
+      z-index: 1;
+    }
+    .black-key {
+      width: 26px;
+      height: 110px;
+      background: black;
+      color: white;
+      z-index: 2;
+    }
+    .active {
+      background: #88f !important;
     }
   </style>
 </head>
 <body>
 
-<h1>🎹 進階互動鋼琴</h1>
-<p>支援：A S D F G H J + Z X C V B N M + Q W E R T Y U（共 3 組八度）</p>
-
+<h1>🎹 鋼琴鍵盤 C4 ~ D5（含半音）</h1>
+<p>支援滑鼠與鍵盤操作</p>
 <div class="piano" id="piano"></div>
 
 <script>
-const context = new AudioContext();
-const keys = [
-  {key: 'a', note: 'C4', freq: 261.63},
-  {key: 's', note: 'D4', freq: 293.66},
-  {key: 'd', note: 'E4', freq: 329.63},
-  {key: 'f', note: 'F4', freq: 349.23},
-  {key: 'g', note: 'G4', freq: 392.00},
-  {key: 'h', note: 'A4', freq: 440.00},
-  {key: 'j', note: 'B4', freq: 493.88},
-  {key: 'z', note: 'C3', freq: 130.81},
-  {key: 'x', note: 'D3', freq: 146.83},
-  {key: 'c', note: 'E3', freq: 164.81},
-  {key: 'v', note: 'F3', freq: 174.61},
-  {key: 'b', note: 'G3', freq: 196.00},
-  {key: 'n', note: 'A3', freq: 220.00},
-  {key: 'm', note: 'B3', freq: 246.94},
-  {key: 'q', note: 'C5', freq: 523.25},
-  {key: 'w', note: 'D5', freq: 587.33},
-  {key: 'e', note: 'E5', freq: 659.25},
-  {key: 'r', note: 'F5', freq: 698.46},
-  {key: 't', note: 'G5', freq: 783.99},
-  {key: 'y', note: 'A5', freq: 880.00},
-  {key: 'u', note: 'B5', freq: 987.77},
-];
+const context = new (window.AudioContext || window.webkitAudioContext)();
+const notes = {
+  'z': { note: 'C4', freq: 261.63, pos: 0 },
+  's': { note: 'C#4', freq: 277.18, pos: 30, black: true },
+  'x': { note: 'D4', freq: 293.66, pos: 40 },
+  'd': { note: 'D#4', freq: 311.13, pos: 70, black: true },
+  'c': { note: 'E4', freq: 329.63, pos: 80 },
+  'v': { note: 'F4', freq: 349.23, pos: 120 },
+  'g': { note: 'F#4', freq: 369.99, pos: 150, black: true },
+  'b': { note: 'G4', freq: 392.00, pos: 160 },
+  'h': { note: 'G#4', freq: 415.30, pos: 190, black: true },
+  'n': { note: 'A4', freq: 440.00, pos: 200 },
+  'j': { note: 'A#4', freq: 466.16, pos: 230, black: true },
+  'm': { note: 'B4', freq: 493.88, pos: 240 },
+  'k': { note: 'C5', freq: 523.25, pos: 280 },
+  'l': { note: 'D5', freq: 587.33, pos: 320 }
+};
 
-const activeOscillators = {};  // 存每個鍵的音源
+const oscillators = {};
 
-const pianoDiv = document.getElementById('piano');
-keys.forEach(k => {
-  const el = document.createElement('div');
-  el.className = 'key';
-  el.dataset.key = k.key;
-  el.innerHTML = `<div class="label">${k.key.toUpperCase()}<br>${k.note}</div>`;
-  el.addEventListener('mousedown', () => playNote(k.key));
-  el.addEventListener('mouseup', () => stopNote(k.key));
-  el.addEventListener('mouseleave', () => stopNote(k.key));
-  pianoDiv.appendChild(el);
-});
+const piano = document.getElementById('piano');
 
-function playNote(key) {
-  if (activeOscillators[key]) return; // 避免重複播放
+// Render keys
+for (let key in notes) {
+  const note = notes[key];
+  const div = document.createElement('div');
+  div.className = note.black ? 'black-key' : 'white-key';
+  div.style.left = note.pos + 'px';
+  div.dataset.key = key;
+  div.title = `${note.note} (${key.toUpperCase()})`;
+  div.innerHTML = note.black ? key.toUpperCase() : `<br>${key.toUpperCase()}`;
+  div.addEventListener('mousedown', () => startNote(key));
+  div.addEventListener('mouseup', () => stopNote(key));
+  div.addEventListener('mouseleave', () => stopNote(key));
+  piano.appendChild(div);
+}
 
-  const k = keys.find(k => k.key === key);
-  if (!k) return;
+function startNote(key) {
+  if (oscillators[key]) return;
+  const data = notes[key];
+  if (!data) return;
 
   const osc = context.createOscillator();
   const gain = context.createGain();
-  osc.frequency.value = k.freq;
   osc.type = 'sine';
-  osc.connect(gain);
-  gain.connect(context.destination);
-  gain.gain.setValueAtTime(0.3, context.currentTime);
-
+  osc.frequency.value = data.freq;
+  gain.gain.setValueAtTime(0.2, context.currentTime);
+  osc.connect(gain).connect(context.destination);
   osc.start();
-  activeOscillators[key] = {osc, gain};
 
-  document.querySelector(`.key[data-key="${key}"]`)?.classList.add('active');
+  oscillators[key] = { osc, gain };
+
+  document.querySelector(`[data-key="${key}"]`)?.classList.add('active');
 }
 
 function stopNote(key) {
-  const obj = activeOscillators[key];
+  const obj = oscillators[key];
   if (!obj) return;
 
-  obj.gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.5);
+  obj.gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.5);
   obj.osc.stop(context.currentTime + 0.5);
-  delete activeOscillators[key];
+  delete oscillators[key];
 
-  document.querySelector(`.key[data-key="${key}"]`)?.classList.remove('active');
+  document.querySelector(`[data-key="${key}"]`)?.classList.remove('active');
 }
 
-document.addEventListener('keydown', e => playNote(e.key));
-document.addEventListener('keyup', e => stopNote(e.key));
+document.addEventListener('keydown', e => {
+  if (!e.repeat) startNote(e.key);
+});
+document.addEventListener('keyup', e => {
+  stopNote(e.key);
+});
 </script>
 
 </body>
