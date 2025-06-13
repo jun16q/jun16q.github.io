@@ -27,7 +27,7 @@ var ENVIRONMENT_IS_SHELL = !ENVIRONMENT_IS_WEB && !ENVIRONMENT_IS_NODE && !ENVIR
 
 // --pre-jses are emitted after the Module integration code, so that they can
 // refer to Module (if they choose; they can also define Module)
-// include: C:\Users\Jun\AppData\Local\Temp\tmpk34g6gmf.js
+// include: C:\Users\Jun\AppData\Local\Temp\tmprhupjl8s.js
 
   Module['expectedDataFileDownloads'] ??= 0;
   Module['expectedDataFileDownloads']++;
@@ -204,25 +204,25 @@ Module['FS_createPath']("/", "rsc", true, true);
     }
 
     }
-    loadPackage({"files": [{"filename": "/rsc/0_9.png", "start": 0, "end": 18961}, {"filename": "/rsc/GoldenApple.png", "start": 18961, "end": 21879}, {"filename": "/rsc/Kutar.mp3", "start": 21879, "end": 2073057, "audio": 1}, {"filename": "/rsc/Rules.png", "start": 2073057, "end": 2226125}, {"filename": "/rsc/achievement.txt", "start": 2226125, "end": 2226138}, {"filename": "/rsc/achievement.wav", "start": 2226138, "end": 2429156, "audio": 1}, {"filename": "/rsc/apple.png", "start": 2429156, "end": 2432552}, {"filename": "/rsc/bestscore.txt", "start": 2432552, "end": 2432554}, {"filename": "/rsc/bounce.wav", "start": 2432554, "end": 2450558, "audio": 1}, {"filename": "/rsc/caught.wav", "start": 2450558, "end": 2619980, "audio": 1}, {"filename": "/rsc/font.ttf", "start": 2619980, "end": 2630300}, {"filename": "/rsc/forest.png", "start": 2630300, "end": 2769461}, {"filename": "/rsc/gamestart.wav", "start": 2769461, "end": 3268751, "audio": 1}, {"filename": "/rsc/kutar0.png", "start": 3268751, "end": 3289857}, {"filename": "/rsc/kutar0_f.png", "start": 3289857, "end": 3321494}, {"filename": "/rsc/kutar0_g.png", "start": 3321494, "end": 3342740}, {"filename": "/rsc/kutar1.png", "start": 3342740, "end": 3364701}, {"filename": "/rsc/kutar1_g.png", "start": 3364701, "end": 3386287}, {"filename": "/rsc/lobby.mp3", "start": 3386287, "end": 3692487, "audio": 1}, {"filename": "/rsc/mushroom.png", "start": 3692487, "end": 3695684}, {"filename": "/rsc/rock.png", "start": 3695684, "end": 3697908}, {"filename": "/rsc/shine.wav", "start": 3697908, "end": 4348902, "audio": 1}, {"filename": "/rsc/stonecatch.wav", "start": 4348902, "end": 4584754, "audio": 1}, {"filename": "/rsc/stonehit.wav", "start": 4584754, "end": 4669554, "audio": 1}, {"filename": "/rsc/wood.png", "start": 4669554, "end": 4674032}], "remote_package_size": 4674032});
+    loadPackage({"files": [{"filename": "/rsc/0_9.png", "start": 0, "end": 18961}, {"filename": "/rsc/GoldenApple.png", "start": 18961, "end": 21879}, {"filename": "/rsc/Kutar.mp3", "start": 21879, "end": 2073057, "audio": 1}, {"filename": "/rsc/Kutar.wav", "start": 2073057, "end": 11109611, "audio": 1}, {"filename": "/rsc/Rules.png", "start": 11109611, "end": 11262679}, {"filename": "/rsc/achievement.txt", "start": 11262679, "end": 11262692}, {"filename": "/rsc/achievement.wav", "start": 11262692, "end": 11465710, "audio": 1}, {"filename": "/rsc/apple.png", "start": 11465710, "end": 11469106}, {"filename": "/rsc/bestscore.txt", "start": 11469106, "end": 11469108}, {"filename": "/rsc/bounce.wav", "start": 11469108, "end": 11487112, "audio": 1}, {"filename": "/rsc/caught.wav", "start": 11487112, "end": 11656534, "audio": 1}, {"filename": "/rsc/font.ttf", "start": 11656534, "end": 11666854}, {"filename": "/rsc/forest.png", "start": 11666854, "end": 11806015}, {"filename": "/rsc/gamestart.wav", "start": 11806015, "end": 12305305, "audio": 1}, {"filename": "/rsc/kutar0.png", "start": 12305305, "end": 12326411}, {"filename": "/rsc/kutar0_f.png", "start": 12326411, "end": 12358048}, {"filename": "/rsc/kutar0_g.png", "start": 12358048, "end": 12379294}, {"filename": "/rsc/kutar1.png", "start": 12379294, "end": 12401255}, {"filename": "/rsc/kutar1_g.png", "start": 12401255, "end": 12422841}, {"filename": "/rsc/lobby.mp3", "start": 12422841, "end": 12729041, "audio": 1}, {"filename": "/rsc/lobby.wav", "start": 12729041, "end": 14072539, "audio": 1}, {"filename": "/rsc/mushroom.png", "start": 14072539, "end": 14075736}, {"filename": "/rsc/rock.png", "start": 14075736, "end": 14077960}, {"filename": "/rsc/shine.wav", "start": 14077960, "end": 14728954, "audio": 1}, {"filename": "/rsc/stonecatch.wav", "start": 14728954, "end": 14964806, "audio": 1}, {"filename": "/rsc/stonehit.wav", "start": 14964806, "end": 15049606, "audio": 1}, {"filename": "/rsc/wood.png", "start": 15049606, "end": 15054084}], "remote_package_size": 15054084});
 
   })();
 
-// end include: C:\Users\Jun\AppData\Local\Temp\tmpk34g6gmf.js
-// include: C:\Users\Jun\AppData\Local\Temp\tmp8r0lwfl8.js
+// end include: C:\Users\Jun\AppData\Local\Temp\tmprhupjl8s.js
+// include: C:\Users\Jun\AppData\Local\Temp\tmpm4b6zewx.js
 
     // All the pre-js content up to here must remain later on, we need to run
     // it.
     if ((typeof ENVIRONMENT_IS_WASM_WORKER != 'undefined' && ENVIRONMENT_IS_WASM_WORKER) || (typeof ENVIRONMENT_IS_PTHREAD != 'undefined' && ENVIRONMENT_IS_PTHREAD) || (typeof ENVIRONMENT_IS_AUDIO_WORKLET != 'undefined' && ENVIRONMENT_IS_AUDIO_WORKLET)) Module['preRun'] = [];
     var necessaryPreJSTasks = Module['preRun'].slice();
-  // end include: C:\Users\Jun\AppData\Local\Temp\tmp8r0lwfl8.js
-// include: C:\Users\Jun\AppData\Local\Temp\tmp8cp8mlhr.js
+  // end include: C:\Users\Jun\AppData\Local\Temp\tmpm4b6zewx.js
+// include: C:\Users\Jun\AppData\Local\Temp\tmpjl5ldsyk.js
 
     if (!Module['preRun']) throw 'Module.preRun should exist because file support used it; did a pre-js delete it?';
     necessaryPreJSTasks.forEach((task) => {
       if (Module['preRun'].indexOf(task) < 0) throw 'All preRun tasks that exist before user pre-js code should remain after; did you replace Module or modify Module.preRun?';
     });
-  // end include: C:\Users\Jun\AppData\Local\Temp\tmp8cp8mlhr.js
+  // end include: C:\Users\Jun\AppData\Local\Temp\tmpjl5ldsyk.js
 
 
 var arguments_ = [];
