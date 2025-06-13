@@ -2,14 +2,100 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title></title>
-  <link rel="stylesheet" href="style.css" />
+  <title>鋼琴互動鍵盤</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #f7f7f7;
+    }
+    .piano {
+      display: flex;
+      justify-content: center;
+      margin: 50px;
+    }
+    .key {
+      width: 60px;
+      height: 200px;
+      border: 1px solid #333;
+      margin: 1px;
+      background: white;
+      position: relative;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      cursor: pointer;
+    }
+    .key:active {
+      background: #ddd;
+    }
+    .label {
+      position: absolute;
+      bottom: 10px;
+      width: 100%;
+      font-size: 14px;
+      color: #333;
+    }
+  </style>
 </head>
 <body>
-  <h1>謎擬q</h1>
-  <img id="mainImage" src="q.png" alt="" />
-  <audio id="audioPlayer" src="cry.opus"></audio>
-  <script src="script.js"></script>
+
+<h1>🎹 鋼琴互動鍵盤</h1>
+<p>點擊或按鍵盤：A S D F G H J</p>
+
+<div class="piano">
+  <div class="key" data-note="C" data-key="a"><div class="label">A</div></div>
+  <div class="key" data-note="D" data-key="s"><div class="label">S</div></div>
+  <div class="key" data-note="E" data-key="d"><div class="label">D</div></div>
+  <div class="key" data-note="F" data-key="f"><div class="label">F</div></div>
+  <div class="key" data-note="G" data-key="g"><div class="label">G</div></div>
+  <div class="key" data-note="A" data-key="h"><div class="label">H</div></div>
+  <div class="key" data-note="B" data-key="j"><div class="label">J</div></div>
+</div>
+
+<script>
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+const context = new AudioContext();
+
+const notes = {
+  'a': 261.63, // C
+  's': 293.66, // D
+  'd': 329.63, // E
+  'f': 349.23, // F
+  'g': 392.00, // G
+  'h': 440.00, // A
+  'j': 493.88  // B
+};
+
+function playNote(freq) {
+  const osc = context.createOscillator();
+  const gain = context.createGain();
+  osc.frequency.value = freq;
+  osc.type = 'sine'; // 可改成 'square', 'triangle', 'sawtooth'
+  osc.connect(gain);
+  gain.connect(context.destination);
+  gain.gain.setValueAtTime(0.3, context.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 1);
+  osc.start();
+  osc.stop(context.currentTime + 1);
+}
+
+document.querySelectorAll('.key').forEach(key => {
+  key.addEventListener('click', () => {
+    const k = key.dataset.key;
+    playNote(notes[k]);
+  });
+});
+
+document.addEventListener('keydown', e => {
+  if (notes[e.key]) {
+    playNote(notes[e.key]);
+    const key = document.querySelector(`.key[data-key="${e.key}"]`);
+    if (key) {
+      key.classList.add('active');
+      setTimeout(() => key.classList.remove('active'), 150);
+    }
+  }
+});
+</script>
+
 </body>
 </html>
