@@ -62,9 +62,13 @@ const notes = {
   'n': { note: 'A4', freq: 440.00, pos: 200 },
   'j': { note: 'A#4', freq: 466.16, pos: 230, black: true },
   'm': { note: 'B4', freq: 493.88, pos: 240 },
-  'k': { note: 'C5', freq: 523.25, pos: 280 },
-  'l': { note: 'D5', freq: 587.33, pos: 320 }
+  ',': { note: 'C5', freq: 523.25, pos: 280 },
+  'l': { note: 'C#5', freq: 554.37, pos: 310, black: true },
+  '.': { note: 'D5', freq: 587.33, pos: 320 },
+  ';': { note: 'D#5', freq: 622.25, pos: 350, black: true },
+  '/': { note: 'E5', freq: 659.25, pos: 360 }
 };
+
 
 const oscillators = {};
 
@@ -92,7 +96,7 @@ function startNote(key) {
 
   const osc = context.createOscillator();
   const gain = context.createGain();
-  osc.type = 'sine';
+  osc.type = 'triangle';
   osc.frequency.value = data.freq;
   gain.gain.setValueAtTime(0.2, context.currentTime);
   osc.connect(gain).connect(context.destination);
