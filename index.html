@@ -74,12 +74,12 @@ const notes = {
 
 // 和弦鍵對應音高（QWERTY）
 const chords = {
-  'q': [261.63, 392.00, 659.25],   // C: C4, G4, E5
-  'w': [293.66, 440.00, 698.46],   // Dm: D4, A4, F5
-  'e': [329.63, 493.88, 783.99],   // Em: E4, B4, G5
-  'r': [349.23, 523.25, 880.00],   // F:  F4, C5, A5
-  't': [392.00, 587.33, 987.77],   // G:  G4, D5, B5
-  'y': [440.00, 659.25, 1046.50]   // Am: A4, E5, C6
+  '1': [261.63, 392.00, 659.25],   // C: C4, G4, E5
+  '2': [293.66, 440.00, 698.46],   // Dm: D4, A4, F5
+  '3': [329.63, 493.88, 783.99],   // Em: E4, B4, G5
+  '4': [349.23, 523.25, 880.00],   // F:  F4, C5, A5
+  '5': [392.00, 587.33, 987.77],   // G:  G4, D5, B5
+  '6': [440.00, 659.25, 1046.50]   // Am: A4, E5, C6
 };
 
 // Render keys
@@ -135,7 +135,7 @@ function playChord(key) {
     const gain = context.createGain();
     osc.type = 'triangle';
     osc.frequency.value = freq;
-    gain.gain.setValueAtTime(0.15, context.currentTime);
+    gain.gain.setValueAtTime(0.1, context.currentTime);
     osc.connect(gain).connect(context.destination);
     osc.start();
     chordOscillators[key].push({ osc, gain });
