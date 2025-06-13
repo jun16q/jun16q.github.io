@@ -12,7 +12,8 @@
     .piano {
       position: relative;
       display: inline-block;
-      margin-top: 100px;
+      margin-top: 40px;
+      height: 180px;
     }
     .white-key, .black-key {
       display: inline-block;
@@ -47,6 +48,7 @@
 <p>單音：Z~M, 和弦：1234567, QWERTY</p>
 <div class="piano" id="piano"></div>
 <h2 id="chordLabel">🎵 和弦顯示區</h2>
+
 
 <script>
 const context = new (window.AudioContext || window.webkitAudioContext)();
