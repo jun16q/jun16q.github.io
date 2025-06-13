@@ -50,6 +50,7 @@
 
 <script>
 const context = new (window.AudioContext || window.webkitAudioContext)();
+const chordLabel = document.getElementById('chordLabel');
 const oscillators = {};
 const chordOscillators = {};
 
@@ -87,6 +88,21 @@ const chords = {
   'r': [174.61, 261.63, 415.30],   // Fm
   't': [196.00, 293.66, 466.16],   // Gm
   'y': [220.00, 329.63, 554.37]    // A
+};
+
+const labelMap = {
+  '1': 'C',
+  '2': 'Dm',
+  '3': 'Em',
+  '4': 'F',
+  '5': 'G',
+  '6': 'Am',
+  'q': 'Cm',
+  'w': 'D',
+  'e': 'E',
+  'r': 'Fm',
+  't': 'Gm',
+  'y': 'A'
 };
 
 // Render keys
@@ -147,6 +163,7 @@ function playChord(key) {
     osc.start();
     chordOscillators[key].push({ osc, gain });
   });
+  chordLabel.textContent = `🎵 和弦：${labelMap[key] || '未知'}`;
 }
 
 function stopChord(key) {
@@ -157,6 +174,7 @@ function stopChord(key) {
     osc.stop(context.currentTime + 0.5);
   });
   delete chordOscillators[key];
+  chordLabel.textContent = '🎵 和弦顯示區';
 }
 
 // 全域鍵盤監聽
