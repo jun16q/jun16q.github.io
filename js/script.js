@@ -1,4 +1,4 @@
 function changeImage() {
   const img = document.getElementById("mainImage");
-  img.src = "q.jpg";
+  img.src = "q2.jpg";
 }
