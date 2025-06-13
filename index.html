@@ -2,34 +2,36 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>鋼琴互動鍵盤</title>
+  <title>進階互動鋼琴</title>
   <style>
     body {
       font-family: sans-serif;
       text-align: center;
-      background: #f7f7f7;
+      background: #f0f0f0;
     }
     .piano {
       display: flex;
       justify-content: center;
-      margin: 50px;
+      flex-wrap: wrap;
+      margin: 30px;
     }
     .key {
-      width: 60px;
-      height: 200px;
-      border: 1px solid #333;
+      width: 50px;
+      height: 180px;
       margin: 1px;
       background: white;
-      position: relative;
+      border: 1px solid #aaa;
+      border-radius: 4px;
       box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      position: relative;
       cursor: pointer;
     }
-    .key:active {
-      background: #ddd;
+    .key.active {
+      background: #d0eaff;
     }
     .label {
       position: absolute;
-      bottom: 10px;
+      bottom: 5px;
       width: 100%;
       font-size: 14px;
       color: #333;
@@ -38,63 +40,84 @@
 </head>
 <body>
 
-<h1>🎹 鋼琴互動鍵盤</h1>
-<p>點擊或按鍵盤：A S D F G H J</p>
+<h1>🎹 進階互動鋼琴</h1>
+<p>支援：A S D F G H J + Z X C V B N M + Q W E R T Y U（共 3 組八度）</p>
 
-<div class="piano">
-  <div class="key" data-note="C" data-key="a"><div class="label">A</div></div>
-  <div class="key" data-note="D" data-key="s"><div class="label">S</div></div>
-  <div class="key" data-note="E" data-key="d"><div class="label">D</div></div>
-  <div class="key" data-note="F" data-key="f"><div class="label">F</div></div>
-  <div class="key" data-note="G" data-key="g"><div class="label">G</div></div>
-  <div class="key" data-note="A" data-key="h"><div class="label">H</div></div>
-  <div class="key" data-note="B" data-key="j"><div class="label">J</div></div>
-</div>
+<div class="piano" id="piano"></div>
 
 <script>
-const AudioContext = window.AudioContext || window.webkitAudioContext;
 const context = new AudioContext();
+const keys = [
+  {key: 'a', note: 'C4', freq: 261.63},
+  {key: 's', note: 'D4', freq: 293.66},
+  {key: 'd', note: 'E4', freq: 329.63},
+  {key: 'f', note: 'F4', freq: 349.23},
+  {key: 'g', note: 'G4', freq: 392.00},
+  {key: 'h', note: 'A4', freq: 440.00},
+  {key: 'j', note: 'B4', freq: 493.88},
+  {key: 'z', note: 'C3', freq: 130.81},
+  {key: 'x', note: 'D3', freq: 146.83},
+  {key: 'c', note: 'E3', freq: 164.81},
+  {key: 'v', note: 'F3', freq: 174.61},
+  {key: 'b', note: 'G3', freq: 196.00},
+  {key: 'n', note: 'A3', freq: 220.00},
+  {key: 'm', note: 'B3', freq: 246.94},
+  {key: 'q', note: 'C5', freq: 523.25},
+  {key: 'w', note: 'D5', freq: 587.33},
+  {key: 'e', note: 'E5', freq: 659.25},
+  {key: 'r', note: 'F5', freq: 698.46},
+  {key: 't', note: 'G5', freq: 783.99},
+  {key: 'y', note: 'A5', freq: 880.00},
+  {key: 'u', note: 'B5', freq: 987.77},
+];
 
-const notes = {
-  'a': 261.63, // C
-  's': 293.66, // D
-  'd': 329.63, // E
-  'f': 349.23, // F
-  'g': 392.00, // G
-  'h': 440.00, // A
-  'j': 493.88  // B
-};
+const activeOscillators = {};  // 存每個鍵的音源
 
-function playNote(freq) {
+const pianoDiv = document.getElementById('piano');
+keys.forEach(k => {
+  const el = document.createElement('div');
+  el.className = 'key';
+  el.dataset.key = k.key;
+  el.innerHTML = `<div class="label">${k.key.toUpperCase()}<br>${k.note}</div>`;
+  el.addEventListener('mousedown', () => playNote(k.key));
+  el.addEventListener('mouseup', () => stopNote(k.key));
+  el.addEventListener('mouseleave', () => stopNote(k.key));
+  pianoDiv.appendChild(el);
+});
+
+function playNote(key) {
+  if (activeOscillators[key]) return; // 避免重複播放
+
+  const k = keys.find(k => k.key === key);
+  if (!k) return;
+
   const osc = context.createOscillator();
   const gain = context.createGain();
-  osc.frequency.value = freq;
-  osc.type = 'sine'; // 可改成 'square', 'triangle', 'sawtooth'
+  osc.frequency.value = k.freq;
+  osc.type = 'sine';
   osc.connect(gain);
   gain.connect(context.destination);
   gain.gain.setValueAtTime(0.3, context.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 1);
+
   osc.start();
-  osc.stop(context.currentTime + 1);
+  activeOscillators[key] = {osc, gain};
+
+  document.querySelector(`.key[data-key="${key}"]`)?.classList.add('active');
 }
 
-document.querySelectorAll('.key').forEach(key => {
-  key.addEventListener('click', () => {
-    const k = key.dataset.key;
-    playNote(notes[k]);
-  });
-});
+function stopNote(key) {
+  const obj = activeOscillators[key];
+  if (!obj) return;
 
-document.addEventListener('keydown', e => {
-  if (notes[e.key]) {
-    playNote(notes[e.key]);
-    const key = document.querySelector(`.key[data-key="${e.key}"]`);
-    if (key) {
-      key.classList.add('active');
-      setTimeout(() => key.classList.remove('active'), 150);
-    }
-  }
-});
+  obj.gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.5);
+  obj.osc.stop(context.currentTime + 0.5);
+  delete activeOscillators[key];
+
+  document.querySelector(`.key[data-key="${key}"]`)?.classList.remove('active');
+}
+
+document.addEventListener('keydown', e => playNote(e.key));
+document.addEventListener('keyup', e => stopNote(e.key));
 </script>
 
 </body>
