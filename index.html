@@ -178,7 +178,7 @@ function playChord(key) {
     const gain = context.createGain();
     osc.type = 'triangle';
     osc.frequency.value = freq;
-    gain.gain.setValueAtTime(0.1, context.currentTime);
+    gain.gain.setValueAtTime(0.13, context.currentTime);
     osc.connect(gain).connect(context.destination);
     osc.start();
     chordOscillators[key].push({ osc, gain });
