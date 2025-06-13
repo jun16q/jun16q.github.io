@@ -152,6 +152,8 @@ function stopNote(key) {
 }
 
 // Chord play
+const activeChords = [];
+
 function playChord(key) {
   if (chordOscillators[key]) return;
   const freqs = chords[key];
@@ -167,7 +169,10 @@ function playChord(key) {
     osc.start();
     chordOscillators[key].push({ osc, gain });
   });
-  chordLabel.textContent = `🎵 和弦：${labelMap[key] || '未知'}`;
+  if (!activeChords.includes(key)) {
+    activeChords.push(key);
+  }
+  updateChordLabel();
 }
 
 function stopChord(key) {
@@ -178,7 +183,18 @@ function stopChord(key) {
     osc.stop(context.currentTime + 0.5);
   });
   delete chordOscillators[key];
-  chordLabel.textContent = '🎵 和弦顯示區';
+  const index = activeChords.indexOf(key);
+  if (index !== -1) activeChords.splice(index, 1);
+  updateChordLabel();
+}
+
+function updateChordLabel() {
+  if (activeChords.length === 0) {
+    chordLabel.textContent = '🎵 和弦顯示區';
+  } else {
+    const lastKey = activeChords[activeChords.length - 1];
+    chordLabel.textContent = `🎵 和弦：${labelMap[lastKey] || '未知'}`;
+  }
 }
 
 // 全域鍵盤監聽
