@@ -96,7 +96,9 @@ class Fighter {
     if (!this.crouching && this.height !== this.originalHeight) {
       this.height = this.originalHeight;
     }
-    this.x += this.vx;
+    if (!this.crouching) {
+      this.x += this.vx;
+    }
     this.y += this.vy;
     if (this.y < 300) {
       this.vy += 0.8;
@@ -154,7 +156,7 @@ class Projectile {
       this.x > fighter.x &&
       this.x < fighter.x + fighter.width &&
       this.y > fighter.y - fighter.height &&
-      this.y < fighter.y
+      this.y < fighter.y - (fighter.crouching ? 40 : 0)
     );
   }
 }
@@ -186,8 +188,10 @@ window.addEventListener("keyup", e => keys[e.key] = false);
 function handleInput(player, opponent) {
   player.vx = 0;
   player.crouch(keys[player.controls.down]);
-  if (keys[player.controls.left]) player.vx = -5;
-  if (keys[player.controls.right]) player.vx = 5;
+  if (!player.crouching) {
+    if (keys[player.controls.left]) player.vx = -5;
+    if (keys[player.controls.right]) player.vx = 5;
+  }
   if (keys[player.controls.up] && player.onGround) player.vy = -12;
   if (keys[player.controls.attack]) player.shoot(opponent);
 }
