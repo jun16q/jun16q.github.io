@@ -73,13 +73,15 @@ class Fighter {
     this.vy = 0;
     this.width = 40;
     this.height = 80;
+    this.originalHeight = 80;
     this.color = color;
     this.controls = controls;
     this.onGround = true;
     this.hp = 100;
     this.projectiles = [];
     this.lastShot = 0;
-    this.shootCooldown = 500; // ms
+    this.shootCooldown = 500;
+    this.crouching = false;
   }
 
   draw() {
@@ -91,6 +93,9 @@ class Fighter {
   }
 
   update() {
+    if (!this.crouching && this.height !== this.originalHeight) {
+      this.height = this.originalHeight;
+    }
     this.x += this.vx;
     this.y += this.vy;
     if (this.y < 300) {
@@ -113,6 +118,16 @@ class Fighter {
     const direction = this.x < opponent.x ? 1 : -1;
     const proj = new Projectile(this.x + this.width / 2, this.y - this.height / 2, direction);
     this.projectiles.push(proj);
+  }
+
+  crouch(isCrouching) {
+    if (isCrouching && this.onGround) {
+      this.height = this.originalHeight / 2;
+      this.crouching = true;
+    } else {
+      this.height = this.originalHeight;
+      this.crouching = false;
+    }
   }
 }
 
@@ -170,6 +185,7 @@ window.addEventListener("keyup", e => keys[e.key] = false);
 
 function handleInput(player, opponent) {
   player.vx = 0;
+  player.crouch(keys[player.controls.down]);
   if (keys[player.controls.left]) player.vx = -5;
   if (keys[player.controls.right]) player.vx = 5;
   if (keys[player.controls.up] && player.onGround) player.vy = -12;
@@ -179,7 +195,7 @@ function handleInput(player, opponent) {
 function checkProjectileHits(attacker, target) {
   attacker.projectiles.forEach(p => {
     if (p.hits(target)) {
-      target.hp = Math.max(0, target.hp - 20);
+      target.hp = Math.max(0, target.hp - 5);
       p.outOfBounds = true;
       effects.push(new Effect(p.x, p.y));
     }
