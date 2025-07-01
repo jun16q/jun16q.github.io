@@ -1,236 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>完整半音鋼琴鍵盤＋和弦</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2P Fighting Game</title>
   <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      background: #f0f0f0;
-    }
-    .piano {
-      position: relative;
-      display: inline-block;
-      margin-top: 40px;
-      height: 180px;
-    }
-    .white-key, .black-key {
-      display: inline-block;
-      position: absolute;
-      border: 1px solid #333;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-      cursor: pointer;
-      text-align: center;
-      font-size: 12px;
-    }
-    .white-key {
-      width: 40px;
-      height: 180px;
-      background: white;
-      z-index: 1;
-    }
-    .black-key {
-      width: 26px;
-      height: 110px;
-      background: black;
-      color: white;
-      z-index: 2;
-    }
-    .active {
-      background: #88f !important;
-    }
+    body { margin: 0; overflow: hidden; background: #222; }
+    canvas { display: block; margin: auto; background: #333; }
   </style>
 </head>
 <body>
-
-<h1>🎹 鋼琴鍵盤 C4 ~ D5（含半音）＋常見和弦</h1>
-<p>單音：Z~M, 和弦：1234567, QWERTY</p>
-<div class="piano" id="piano"></div>
-<h2 id="chordLabel">🎵 和弦顯示區</h2>
-
-
+<canvas id="gameCanvas" width="800" height="400"></canvas>
 <script>
-const context = new (window.AudioContext || window.webkitAudioContext)();
-const chordLabel = document.getElementById('chordLabel');
-const oscillators = {};
-const chordOscillators = {};
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-const notes = {
-  'z': { note: 'C4', freq: 261.63, pos: 0 },
-  's': { note: 'C#4', freq: 277.18, pos: 30, black: true },
-  'x': { note: 'D4', freq: 293.66, pos: 40 },
-  'd': { note: 'D#4', freq: 311.13, pos: 70, black: true },
-  'c': { note: 'E4', freq: 329.63, pos: 80 },
-  'v': { note: 'F4', freq: 349.23, pos: 120 },
-  'g': { note: 'F#4', freq: 369.99, pos: 150, black: true },
-  'b': { note: 'G4', freq: 392.00, pos: 160 },
-  'h': { note: 'G#4', freq: 415.30, pos: 190, black: true },
-  'n': { note: 'A4', freq: 440.00, pos: 200 },
-  'j': { note: 'A#4', freq: 466.16, pos: 230, black: true },
-  'm': { note: 'B4', freq: 493.88, pos: 240 },
-  ',': { note: 'C5', freq: 523.25, pos: 280 },
-  'l': { note: 'C#5', freq: 554.37, pos: 310, black: true },
-  '.': { note: 'D5', freq: 587.33, pos: 320 },
-  ';': { note: 'D#5', freq: 622.25, pos: 350, black: true },
-  '/': { note: 'E5', freq: 659.25, pos: 360 }
-};
-
-// 和弦鍵對應音高（QWERTY）
-const chords = {
-  '1': [130.81, 196.00, 329.63],      // C3, G3, E4
-  '2': [146.83, 220.00, 349.23],      // D3, A3, F4
-  '3': [164.81, 246.94, 392.00],      // E3, B3, G4
-  '4': [174.61, 261.63, 440.00],      // F3, C4, A4
-  '5': [196.00, 293.66, 493.88],      // G3, D4, B4
-  '6': [220.00, 329.63, 523.25],      // A3, E4, C5
-  '7': [261.63, 392.00, 659.25],      // C4, G4, E5
-  '8': [293.66, 440.00, 698.46],      // D4, A4, F5
-  '9': [329.63, 493.88, 783.99],      // E4, B4, G5
-  '0': [349.23, 523.25, 880.00],      // F4, C5, A5
-  'q': [130.81, 196.00, 311.13],      // C3, G3, Eb4
-  'w': [146.83, 220.00, 370.00],      // D3, A3, F#4
-  'e': [164.81, 246.94, 415.30],      // E3, B3, G#4
-  'r': [174.61, 261.63, 415.30],      // F3, C4, Ab4
-  't': [196.00, 293.66, 466.16],      // G3, D4, Bb4
-  'y': [220.00, 329.63, 554.37],      // A3, E4, C#5
-  'u': [261.63, 392.00, 622.25],      // C4, G4, Eb5
-  'i': [293.66, 440.00, 739.99],      // D4, A4, F#5
-  'o': [329.63, 493.88, 830.61],      // E4, B4, G#5
-  'p': [349.23, 523.25, 830.61]       // F4, C5, Ab5
-};
-
-const labelMap = {
-  '1': 'C',
-  '2': 'Dm',
-  '3': 'Em',
-  '4': 'F',
-  '5': 'G',
-  '6': 'Am',
-  '7': 'C',
-  '8': 'Dm',
-  '9': 'Em',
-  '0': 'F',
-  'q': 'Cm',
-  'w': 'D',
-  'e': 'E',
-  'r': 'Fm',
-  't': 'Gm',
-  'y': 'A',
-  'u': 'Cm',
-  'i': 'D',
-  'o': 'E',
-  'p': 'Fm',
-};
-
-// Render keys
-const piano = document.getElementById('piano');
-for (let key in notes) {
-  const note = notes[key];
-  const div = document.createElement('div');
-  div.className = note.black ? 'black-key' : 'white-key';
-  div.style.left = note.pos + 'px';
-  div.dataset.key = key;
-  div.title = `${note.note} (${key.toUpperCase()})`;
-  div.innerHTML = note.black ? key.toUpperCase() : `<br>${key.toUpperCase()}`;
-  div.addEventListener('mousedown', () => startNote(key));
-  div.addEventListener('mouseup', () => stopNote(key));
-  div.addEventListener('mouseleave', () => stopNote(key));
-  piano.appendChild(div);
-}
-
-function startNote(key) {
-  if (oscillators[key]) return;
-  const data = notes[key];
-  if (!data) return;
-
-  const osc = context.createOscillator();
-  const gain = context.createGain();
-  osc.type = 'triangle';
-  osc.frequency.value = data.freq;
-  gain.gain.setValueAtTime(0.2, context.currentTime);
-  osc.connect(gain).connect(context.destination);
-  osc.start();
-
-  oscillators[key] = { osc, gain };
-  document.querySelector(`[data-key="${key}"]`)?.classList.add('active');
-}
-
-function stopNote(key) {
-  const obj = oscillators[key];
-  if (!obj) return;
-  obj.gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.5);
-  obj.osc.stop(context.currentTime + 0.5);
-  delete oscillators[key];
-  document.querySelector(`[data-key="${key}"]`)?.classList.remove('active');
-}
-
-// Chord play
-const activeChords = [];
-
-function playChord(key) {
-  if (chordOscillators[key]) return;
-  const freqs = chords[key];
-  if (!freqs) return;
-  chordOscillators[key] = [];
-  freqs.forEach(freq => {
-    const osc = context.createOscillator();
-    const gain = context.createGain();
-    osc.type = 'triangle';
-    osc.frequency.value = freq;
-    gain.gain.setValueAtTime(0.13, context.currentTime);
-    osc.connect(gain).connect(context.destination);
-    osc.start();
-    chordOscillators[key].push({ osc, gain });
-  });
-  if (!activeChords.includes(key)) {
-    activeChords.push(key);
+class Fighter {
+  constructor(x, color, controls) {
+    this.x = x;
+    this.y = 300;
+    this.vx = 0;
+    this.vy = 0;
+    this.width = 40;
+    this.height = 80;
+    this.color = color;
+    this.controls = controls;
+    this.onGround = true;
+    this.hp = 100;
   }
-  updateChordLabel();
-}
 
-function stopChord(key) {
-  const arr = chordOscillators[key];
-  if (!arr) return;
-  arr.forEach(({ osc, gain }) => {
-    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.5);
-    osc.stop(context.currentTime + 0.5);
-  });
-  delete chordOscillators[key];
-  const index = activeChords.indexOf(key);
-  if (index !== -1) activeChords.splice(index, 1);
-  updateChordLabel();
-}
+  draw() {
+    ctx.fillStyle = this.color;
+    ctx.fillRect(this.x, this.y - this.height, this.width, this.height);
+    ctx.fillStyle = "red";
+    ctx.fillRect(this.x, this.y - this.height - 10, this.width * (this.hp / 100), 5);
+  }
 
-function updateChordLabel() {
-  if (activeChords.length === 0) {
-    chordLabel.textContent = '🎵 和弦顯示區';
-  } else {
-    const lastKey = activeChords[activeChords.length - 1];
-    chordLabel.textContent = `🎵 和弦：${labelMap[lastKey] || '未知'}`;
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    if (this.y < 300) {
+      this.vy += 0.8; // gravity
+      this.onGround = false;
+    } else {
+      this.vy = 0;
+      this.y = 300;
+      this.onGround = true;
+    }
+    this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
+  }
+
+  attack(opponent) {
+    if (Math.abs(this.x - opponent.x) < 50 && Math.abs(this.y - opponent.y) < 40) {
+      opponent.hp = Math.max(0, opponent.hp - 10);
+    }
   }
 }
 
-// 全域鍵盤監聽
-document.addEventListener('keydown', e => {
-  if (e.repeat) return;
-  const key = e.key.toLowerCase();
-  if (chords[key]) {
-    playChord(key);
-  } else {
-    startNote(key);
-  }
+const keys = {};
+const p1 = new Fighter(100, "blue", {
+  left: "a", right: "d", up: "w", down: "s", attack1: "z", attack2: "x"
+});
+const p2 = new Fighter(600, "green", {
+  left: "ArrowLeft", right: "ArrowRight", up: "ArrowUp", down: "ArrowDown", attack1: "Control", attack2: "Alt"
 });
 
-document.addEventListener('keyup', e => {
-  const key = e.key.toLowerCase();
-  if (chords[key]) {
-    stopChord(key);
-  } else {
-    stopNote(key);
-  }
-});
+window.addEventListener("keydown", e => keys[e.key] = true);
+window.addEventListener("keyup", e => keys[e.key] = false);
+
+function handleInput(player) {
+  player.vx = 0;
+  if (keys[player.controls.left]) player.vx = -5;
+  if (keys[player.controls.right]) player.vx = 5;
+  if (keys[player.controls.up] && player.onGround) player.vy = -12;
+  if (keys[player.controls.attack1]) player.attack(player === p1 ? p2 : p1);
+  if (keys[player.controls.attack2]) player.attack(player === p1 ? p2 : p1);
+}
+
+function gameLoop() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  handleInput(p1);
+  handleInput(p2);
+
+  p1.update();
+  p2.update();
+
+  p1.draw();
+  p2.draw();
+
+  requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
 </script>
-
 </body>
 </html>
