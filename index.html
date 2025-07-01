@@ -7,13 +7,39 @@
   <style>
     body { margin: 0; overflow: hidden; background: #222; }
     canvas { display: block; margin: auto; background: #333; }
+    #overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 2em;
+      font-family: sans-serif;
+      flex-direction: column;
+    }
+    button {
+      font-size: 1em;
+      margin-top: 1em;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
+<div id="overlay" style="display:none">
+  <div id="message"></div>
+  <button onclick="restartGame()">Play Again</button>
+</div>
 <canvas id="gameCanvas" width="800" height="400"></canvas>
 <script>
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+const overlay = document.getElementById("overlay");
+const messageBox = document.getElementById("message");
 
 class Fighter {
   constructor(x, color, controls) {
@@ -27,6 +53,7 @@ class Fighter {
     this.controls = controls;
     this.onGround = true;
     this.hp = 100;
+    this.projectiles = [];
   }
 
   draw() {
@@ -34,6 +61,9 @@ class Fighter {
     ctx.fillRect(this.x, this.y - this.height, this.width, this.height);
     ctx.fillStyle = "red";
     ctx.fillRect(this.x, this.y - this.height - 10, this.width * (this.hp / 100), 5);
+
+    // Draw projectiles
+    this.projectiles.forEach(p => p.draw());
   }
 
   update() {
@@ -48,6 +78,10 @@ class Fighter {
       this.onGround = true;
     }
     this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
+
+    // Update projectiles
+    this.projectiles.forEach(p => p.update());
+    this.projectiles = this.projectiles.filter(p => !p.outOfBounds);
   }
 
   attack(opponent) {
@@ -55,44 +89,113 @@ class Fighter {
       opponent.hp = Math.max(0, opponent.hp - 10);
     }
   }
+
+  shoot(opponent) {
+    const direction = this.x < opponent.x ? 1 : -1;
+    const proj = new Projectile(this.x + this.width/2, this.y - this.height/2, direction);
+    this.projectiles.push(proj);
+  }
 }
 
-const keys = {};
-const p1 = new Fighter(100, "blue", {
-  left: "a", right: "d", up: "w", down: "s", attack1: "z", attack2: "x"
-});
-const p2 = new Fighter(600, "green", {
-  left: "ArrowLeft", right: "ArrowRight", up: "ArrowUp", down: "ArrowDown", attack1: "Control", attack2: "Alt"
-});
+class Projectile {
+  constructor(x, y, direction) {
+    this.x = x;
+    this.y = y;
+    this.vx = direction * 7;
+    this.radius = 5;
+    this.outOfBounds = false;
+  }
+
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = "yellow";
+    ctx.fill();
+  }
+
+  update() {
+    this.x += this.vx;
+    if (this.x < 0 || this.x > canvas.width) this.outOfBounds = true;
+  }
+
+  hits(fighter) {
+    return (
+      this.x > fighter.x &&
+      this.x < fighter.x + fighter.width &&
+      this.y > fighter.y - fighter.height &&
+      this.y < fighter.y
+    );
+  }
+}
+
+let keys = {};
+let p1, p2;
+let gameOver = false;
+
+function initGame() {
+  keys = {};
+  gameOver = false;
+  p1 = new Fighter(100, "blue", {
+    left: "a", right: "d", up: "w", down: "s", attack1: "z", attack2: "x"
+  });
+  p2 = new Fighter(600, "green", {
+    left: "ArrowLeft", right: "ArrowRight", up: "ArrowUp", down: "ArrowDown", attack1: "Control", attack2: "Alt"
+  });
+  overlay.style.display = "none";
+  requestAnimationFrame(gameLoop);
+}
 
 window.addEventListener("keydown", e => keys[e.key] = true);
 window.addEventListener("keyup", e => keys[e.key] = false);
 
-function handleInput(player) {
+function handleInput(player, opponent) {
   player.vx = 0;
   if (keys[player.controls.left]) player.vx = -5;
   if (keys[player.controls.right]) player.vx = 5;
   if (keys[player.controls.up] && player.onGround) player.vy = -12;
-  if (keys[player.controls.attack1]) player.attack(player === p1 ? p2 : p1);
-  if (keys[player.controls.attack2]) player.attack(player === p1 ? p2 : p1);
+  if (keys[player.controls.attack1]) player.attack(opponent);
+  if (keys[player.controls.attack2]) player.shoot(opponent);
+}
+
+function checkProjectileHits(attacker, target) {
+  attacker.projectiles.forEach(p => {
+    if (p.hits(target)) {
+      target.hp = Math.max(0, target.hp - 5);
+      p.outOfBounds = true;
+    }
+  });
 }
 
 function gameLoop() {
+  if (gameOver) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  handleInput(p1);
-  handleInput(p2);
+  handleInput(p1, p2);
+  handleInput(p2, p1);
 
   p1.update();
   p2.update();
 
+  checkProjectileHits(p1, p2);
+  checkProjectileHits(p2, p1);
+
   p1.draw();
   p2.draw();
 
-  requestAnimationFrame(gameLoop);
+  if (p1.hp <= 0 || p2.hp <= 0) {
+    gameOver = true;
+    messageBox.innerText = p1.hp <= 0 ? "Player 2 Wins!" : "Player 1 Wins!";
+    overlay.style.display = "flex";
+  } else {
+    requestAnimationFrame(gameLoop);
+  }
 }
 
-gameLoop();
+function restartGame() {
+  initGame();
+}
+
+initGame();
 </script>
 </body>
 </html>
