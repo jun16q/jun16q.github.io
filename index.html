@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>2P Online Fighting Game</title>
+  <title>2P Fighting Game</title>
   <style>
     body { margin: 0; overflow: hidden; background: #222; }
     canvas { display: block; margin: auto; background: #333; }
@@ -41,8 +41,6 @@ const ctx = canvas.getContext("2d");
 const overlay = document.getElementById("overlay");
 const messageBox = document.getElementById("message");
 const effects = [];
-let socket;
-let playerId;
 
 class Effect {
   constructor(x, y) {
@@ -115,11 +113,11 @@ class Fighter {
     this.projectiles = this.projectiles.filter(p => !p.outOfBounds);
   }
 
-  shoot() {
+  shoot(opponent) {
     const now = Date.now();
     if (now - this.lastShot < this.shootCooldown) return;
     this.lastShot = now;
-    const direction = this.color === "blue" ? 1 : -1;
+    const direction = this.x < opponent.x ? 1 : -1;
     const proj = new Projectile(this.x + this.width / 2, this.y - this.height / 2, direction);
     this.projectiles.push(proj);
   }
@@ -140,7 +138,7 @@ class Projectile {
     this.x = x;
     this.y = y;
     this.vx = direction * 7;
-    this.radius = 10;
+    this.radius = 10; // Increased from 5 to 10
     this.outOfBounds = false;
   }
   draw() {
@@ -178,35 +176,7 @@ function initGame() {
     left: "ArrowLeft", right: "ArrowRight", up: "ArrowUp", down: "ArrowDown", attack: "l"
   });
   overlay.style.display = "none";
-  connectWebSocket();
   requestAnimationFrame(gameLoop);
-}
-
-function connectWebSocket() {
-  socket = new WebSocket(location.origin.replace(/^http/, 'ws'));
-
-  socket.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    if (data.type === 'init') {
-      playerId = data.id;
-    } else if (data.type === 'state') {
-      const other = playerId === 0 ? p2 : p1;
-      Object.assign(other, data.state);
-    }
-  };
-
-  socket.onclose = () => alert("Disconnected from server");
-}
-
-function sendState(player) {
-  if (socket && socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({ type: 'state', state: {
-      x: player.x,
-      y: player.y,
-      hp: player.hp,
-      crouching: player.crouching
-    }}));
-  }
 }
 
 window.addEventListener("keydown", e => {
@@ -215,7 +185,7 @@ window.addEventListener("keydown", e => {
 });
 window.addEventListener("keyup", e => keys[e.key] = false);
 
-function handleInput(player) {
+function handleInput(player, opponent) {
   player.vx = 0;
   player.crouch(keys[player.controls.down]);
   if (!player.crouching) {
@@ -223,7 +193,7 @@ function handleInput(player) {
     if (keys[player.controls.right]) player.vx = 5;
   }
   if (keys[player.controls.up] && player.onGround) player.vy = -12;
-  if (keys[player.controls.attack]) player.shoot();
+  if (keys[player.controls.attack]) player.shoot(opponent);
 }
 
 function checkProjectileHits(attacker, target) {
@@ -240,20 +210,22 @@ function gameLoop() {
   if (gameOver) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  const player = playerId === 0 ? p1 : p2;
-  const opponent = playerId === 0 ? p2 : p1;
+  handleInput(p1, p2);
+  handleInput(p2, p1);
 
-  handleInput(player);
-  player.update();
-  opponent.update();
-  checkProjectileHits(player, opponent);
+  p1.update();
+  p2.update();
 
-  sendState(player);
+  checkProjectileHits(p1, p2);
+  checkProjectileHits(p2, p1);
 
   p1.draw();
   p2.draw();
 
-  effects.forEach(e => { e.update(); e.draw(); });
+  effects.forEach(e => {
+    e.update();
+    e.draw();
+  });
   for (let i = effects.length - 1; i >= 0; i--) {
     if (effects[i].done) effects.splice(i, 1);
   }
