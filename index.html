@@ -40,6 +40,33 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const overlay = document.getElementById("overlay");
 const messageBox = document.getElementById("message");
+const effects = [];
+
+class Effect {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.radius = 0;
+    this.opacity = 1;
+  }
+
+  update() {
+    this.radius += 2;
+    this.opacity -= 0.05;
+  }
+
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(255, 255, 0, ${this.opacity})`;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+
+  get done() {
+    return this.opacity <= 0;
+  }
+}
 
 class Fighter {
   constructor(x, color, controls) {
@@ -61,8 +88,6 @@ class Fighter {
     ctx.fillRect(this.x, this.y - this.height, this.width, this.height);
     ctx.fillStyle = "red";
     ctx.fillRect(this.x, this.y - this.height - 10, this.width * (this.hp / 100), 5);
-
-    // Draw projectiles
     this.projectiles.forEach(p => p.draw());
   }
 
@@ -70,7 +95,7 @@ class Fighter {
     this.x += this.vx;
     this.y += this.vy;
     if (this.y < 300) {
-      this.vy += 0.8; // gravity
+      this.vy += 0.8;
       this.onGround = false;
     } else {
       this.vy = 0;
@@ -78,8 +103,6 @@ class Fighter {
       this.onGround = true;
     }
     this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
-
-    // Update projectiles
     this.projectiles.forEach(p => p.update());
     this.projectiles = this.projectiles.filter(p => !p.outOfBounds);
   }
@@ -87,12 +110,13 @@ class Fighter {
   attack(opponent) {
     if (Math.abs(this.x - opponent.x) < 50 && Math.abs(this.y - opponent.y) < 40) {
       opponent.hp = Math.max(0, opponent.hp - 10);
+      effects.push(new Effect(opponent.x + opponent.width / 2, opponent.y - opponent.height / 2));
     }
   }
 
   shoot(opponent) {
     const direction = this.x < opponent.x ? 1 : -1;
-    const proj = new Projectile(this.x + this.width/2, this.y - this.height/2, direction);
+    const proj = new Projectile(this.x + this.width / 2, this.y - this.height / 2, direction);
     this.projectiles.push(proj);
   }
 }
@@ -135,6 +159,7 @@ let gameOver = false;
 function initGame() {
   keys = {};
   gameOver = false;
+  effects.length = 0;
   p1 = new Fighter(100, "blue", {
     left: "a", right: "d", up: "w", down: "s", attack1: "z", attack2: "x"
   });
@@ -162,6 +187,7 @@ function checkProjectileHits(attacker, target) {
     if (p.hits(target)) {
       target.hp = Math.max(0, target.hp - 5);
       p.outOfBounds = true;
+      effects.push(new Effect(p.x, p.y));
     }
   });
 }
@@ -181,6 +207,14 @@ function gameLoop() {
 
   p1.draw();
   p2.draw();
+
+  effects.forEach(e => {
+    e.update();
+    e.draw();
+  });
+  for (let i = effects.length - 1; i >= 0; i--) {
+    if (effects[i].done) effects.splice(i, 1);
+  }
 
   if (p1.hp <= 0 || p2.hp <= 0) {
     gameOver = true;
