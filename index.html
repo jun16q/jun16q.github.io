@@ -153,10 +153,10 @@ class Projectile {
   }
   hits(fighter) {
     return (
-      this.x > fighter.x &&
-      this.x < fighter.x + fighter.width &&
-      this.y > fighter.y - fighter.height &&
-      this.y < fighter.y - (fighter.crouching ? 40 : 0)
+      this.x + this.radius > fighter.x &&
+      this.x - this.radius < fighter.x + fighter.width &&
+      this.y + this.radius > fighter.y - fighter.height &&
+      this.y - this.radius < fighter.y
     );
   }
 }
