@@ -107,13 +107,6 @@ class Fighter {
     this.projectiles = this.projectiles.filter(p => !p.outOfBounds);
   }
 
-  attack(opponent) {
-    if (Math.abs(this.x - opponent.x) < 50 && Math.abs(this.y - opponent.y) < 40) {
-      opponent.hp = Math.max(0, opponent.hp - 10);
-      effects.push(new Effect(opponent.x + opponent.width / 2, opponent.y - opponent.height / 2));
-    }
-  }
-
   shoot(opponent) {
     const direction = this.x < opponent.x ? 1 : -1;
     const proj = new Projectile(this.x + this.width / 2, this.y - this.height / 2, direction);
@@ -161,10 +154,10 @@ function initGame() {
   gameOver = false;
   effects.length = 0;
   p1 = new Fighter(100, "blue", {
-    left: "a", right: "d", up: "w", down: "s", attack1: "z", attack2: "x"
+    left: "a", right: "d", up: "w", down: "s", attack: "x"
   });
   p2 = new Fighter(600, "green", {
-    left: "ArrowLeft", right: "ArrowRight", up: "ArrowUp", down: "ArrowDown", attack1: "Control", attack2: "Alt"
+    left: "ArrowLeft", right: "ArrowRight", up: "ArrowUp", down: "ArrowDown", attack: "l"
   });
   overlay.style.display = "none";
   requestAnimationFrame(gameLoop);
@@ -178,8 +171,7 @@ function handleInput(player, opponent) {
   if (keys[player.controls.left]) player.vx = -5;
   if (keys[player.controls.right]) player.vx = 5;
   if (keys[player.controls.up] && player.onGround) player.vy = -12;
-  if (keys[player.controls.attack1]) player.attack(opponent);
-  if (keys[player.controls.attack2]) player.shoot(opponent);
+  if (keys[player.controls.attack]) player.shoot(opponent);
 }
 
 function checkProjectileHits(attacker, target) {
