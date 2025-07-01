@@ -32,7 +32,7 @@
 <body>
 <div id="overlay" style="display:none">
   <div id="message"></div>
-  <button onclick="restartGame()">Play Again</button>
+  <button onclick="restartGame()">Play Again (or press Space)</button>
 </div>
 <canvas id="gameCanvas" width="800" height="400"></canvas>
 <script>
@@ -49,12 +49,10 @@ class Effect {
     this.radius = 0;
     this.opacity = 1;
   }
-
   update() {
     this.radius += 2;
     this.opacity -= 0.05;
   }
-
   draw() {
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
@@ -62,7 +60,6 @@ class Effect {
     ctx.lineWidth = 3;
     ctx.stroke();
   }
-
   get done() {
     return this.opacity <= 0;
   }
@@ -81,6 +78,8 @@ class Fighter {
     this.onGround = true;
     this.hp = 100;
     this.projectiles = [];
+    this.lastShot = 0;
+    this.shootCooldown = 500; // ms
   }
 
   draw() {
@@ -108,6 +107,9 @@ class Fighter {
   }
 
   shoot(opponent) {
+    const now = Date.now();
+    if (now - this.lastShot < this.shootCooldown) return;
+    this.lastShot = now;
     const direction = this.x < opponent.x ? 1 : -1;
     const proj = new Projectile(this.x + this.width / 2, this.y - this.height / 2, direction);
     this.projectiles.push(proj);
@@ -122,19 +124,16 @@ class Projectile {
     this.radius = 5;
     this.outOfBounds = false;
   }
-
   draw() {
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
     ctx.fillStyle = "yellow";
     ctx.fill();
   }
-
   update() {
     this.x += this.vx;
     if (this.x < 0 || this.x > canvas.width) this.outOfBounds = true;
   }
-
   hits(fighter) {
     return (
       this.x > fighter.x &&
@@ -163,7 +162,10 @@ function initGame() {
   requestAnimationFrame(gameLoop);
 }
 
-window.addEventListener("keydown", e => keys[e.key] = true);
+window.addEventListener("keydown", e => {
+  keys[e.key] = true;
+  if (gameOver && e.code === "Space") restartGame();
+});
 window.addEventListener("keyup", e => keys[e.key] = false);
 
 function handleInput(player, opponent) {
