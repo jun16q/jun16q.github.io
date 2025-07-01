@@ -76,7 +76,7 @@ class Fighter {
     this.color = color;
     this.controls = controls;
     this.onGround = true;
-    this.hp = 10;
+    this.hp = 100;
     this.projectiles = [];
     this.lastShot = 0;
     this.shootCooldown = 500; // ms
@@ -179,7 +179,7 @@ function handleInput(player, opponent) {
 function checkProjectileHits(attacker, target) {
   attacker.projectiles.forEach(p => {
     if (p.hits(target)) {
-      target.hp = Math.max(0, target.hp - 5);
+      target.hp = Math.max(0, target.hp - 20);
       p.outOfBounds = true;
       effects.push(new Effect(p.x, p.y));
     }
